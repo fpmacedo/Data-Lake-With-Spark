@@ -17,6 +17,11 @@ os.environ["AWS_SECRET_ACCESS_KEY"]= config['AWS']['AWS_SECRET_ACCESS_KEY']
 
 
 def create_spark_session():
+    
+    """
+    Create the spark session with the passed configs.
+    """
+    
     spark = SparkSession \
         .builder \
         .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:2.7.0") \
@@ -25,8 +30,21 @@ def create_spark_session():
 
 
 def process_song_data(spark, input_data, output_data):
+    
+    """
+    Perform ETL on song_data to create the songs and artists dimensional tables: 
+    - Process a single song data file and upload to database. 
+    - Extract song data to insert records into table.
+    - Extract artist data to insert records into table.
+    
+    Parameters:
+    - spark: spark session
+    - input_data : path to input files
+    - output_data : path to output files
+    """
+    
     # get filepath to song data file
-    song_data = os.path.join(input_data,"song_data/*/*/*/*.json")
+    song_data = os.path.join(input_data,"song_data/A/A/A/*.json")
     
     # read song data file
     df = spark.read.json(song_data)
@@ -48,8 +66,23 @@ def process_song_data(spark, input_data, output_data):
 
 
 def process_log_data(spark, input_data, output_data):
+    
+    """
+     Perform ETL on log_data to create the time and users dimensional tables, 
+    as well as the songplays fact table:
+    - Process a single log file and load a single record into each table.
+    - Extract time data to insert records for the timestamps into table.
+    - Extract user data to insert records into table.
+    - Extract and inserts data for songplays table from different tables.
+    
+    Parameters:
+    - spark: spark session
+    - input_data : path to input files
+    - output_data : path to output files
+    """
+    
     # get filepath to log data file
-    log_data = os.path.join(input_data,"log_data/*/*/*.json")
+    log_data = os.path.join(input_data,"log_data/2018/11/*.json")
 
 
     # read log data file
@@ -105,12 +138,27 @@ def process_log_data(spark, input_data, output_data):
     songplays_table.select(monotonically_increasing_id().alias('songplay_id')).collect()
 
     # write songplays table to parquet files partitioned by year and month
-    songplays_table.write.parquet(os.path.join(output_data, 'songplays.parquet'), 'overwrite')
+    songplays_table\
+    .withColumn("year", get_year(songplays_table.timestamp))\
+    .withColumn("month", get_month(df.timestamp))\
+    .write\
+    .partitionBy('year', 'month')\
+    .parquet(os.path.join(output_data, 'songplays.parquet'), 'overwrite')
+    
     print("--- songplays.parquet completed ---")
     print("*** process_log_data completed ***\n\nEND")
 
 
 def main():
+    
+    """
+    Build ETL Pipeline for Sparkify song play data:
+    
+    Call the function to create a spark session;
+    Instantiate the input and output paths;
+    Call the process functions.
+    """
+    
     spark = create_spark_session()
     input_data = "s3a://udacity-dend/"
     output_data = "s3a://fpmacedo/tables/"
