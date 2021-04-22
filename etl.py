@@ -140,7 +140,7 @@ def process_log_data(spark, input_data, output_data):
     # write songplays table to parquet files partitioned by year and month
     songplays_table\
     .withColumn("year", get_year(songplays_table.timestamp))\
-    .withColumn("month", get_month(df.timestamp))\
+    .withColumn("month", get_month(songplays_table.timestamp))\
     .write\
     .partitionBy('year', 'month')\
     .parquet(os.path.join(output_data, 'songplays.parquet'), 'overwrite')
