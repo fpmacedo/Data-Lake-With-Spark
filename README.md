@@ -65,8 +65,8 @@ Using the song and event datasets, we'll need to create a star schema optimized 
 
 The project includes two files:
 
-- `etl.py` - loads data from S3 into staging tables on Redshift and then processes that data into analytics tables on Redshift
-- `dl.cfg` - provides individual AWS credentails
+- `etl.py` - loads data from S3 to S3;
+- `dl.cfg` - provides individual AWS credentails.
 
 ## 5. ETL Pipeline
 
